@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111514">
+  <meta name="description" content="VoiceShift AI calling workspace prototype.">
+  <title>VoiceShift AI | Voice calling workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <div class="app-shell" id="app-shell" aria-hidden="true">
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard" aria-label="VoiceShift AI home"><span class="brand-symbol">v</span><span>voice<span class="brand-light">shift</span><small>AI CALLING STUDIO</small></span></a>
+      <div class="workspace-label">WORKSPACE <span>PERSONAL</span></div>
+      <nav class="navigation" aria-label="Main navigation">
+        <a class="nav-link active" href="#dashboard"><span class="nav-icon">⌂</span>Overview</a>
+        <a class="nav-link" href="#voice-selection"><span class="nav-icon">◉</span>Voice studio</a>
+        <a class="nav-link" href="#history"><span class="nav-icon">◷</span>Call history</a>
+        <a class="nav-link" href="#settings"><span class="nav-icon">⚙</span>Settings</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="secure-note"><span class="secure-icon">◇</span><div><strong>Private by design</strong><small>Calls are never recorded in this demo.</small></div></div>
+        <button class="account-button" id="account-button" type="button"><span class="account-avatar">A</span><span class="account-copy"><b id="account-name">Alex Morgan</b><small>Personal workspace</small></span><span class="account-menu">···</span></button>
+      </div>
+    </aside>
+
+    <main class="main-content" id="dashboard">
+      <header class="topbar">
+        <div class="breadcrumbs">Workspace <span>/</span> Overview</div>
+        <div class="topbar-actions"><span class="prototype-tag"><i></i> PROTOTYPE MODE</span><button class="icon-button" id="help-button" type="button" aria-label="About this prototype">?</button></div>
+      </header>
+
+      <section class="welcome-row">
+        <div><p class="eyebrow">YOUR VOICE, YOUR CHOICE</p><h1>Welcome to<br><span>VoiceShift AI</span></h1><p class="welcome-copy">Make every conversation sound like you, in a voice that feels right.</p></div>
+        <div class="availability"><span class="availability-dot"></span><span><b>Workspace ready</b><small>Voice preview environment</small></span></div>
+      </section>
+
+      <section class="number-section section-block" id="phone-numbers" aria-labelledby="number-title">
+        <div class="section-heading"><div><p class="eyebrow">01 / CALL SETUP</p><h2 id="number-title">Your numbers</h2></div><span class="step-label">Both numbers stay private</span></div>
+        <div class="number-grid">
+          <div class="field-card"><div class="field-label">MY CALLING NUMBER <span class="unverified">VERIFY BEFORE LIVE USE</span></div><label class="phone-input-wrap"><span class="country-code">+1</span><input id="my-number" type="tel" autocomplete="tel" value="202 555 0148" aria-label="My calling number" placeholder="Enter your number"></label><small>Enter a number you own or are authorized to use.</small><label class="authorization-check"><input id="caller-authorized" type="checkbox"><span>I own or am authorized to use this number.</span></label></div>
+          <div class="field-card recipient-field"><div class="field-label">RECIPIENT'S PHONE NUMBER <span class="required-dot">REQUIRED</span></div><div class="phone-input-wrap"><span class="country-code">+1</span><input id="recipient-number" type="tel" autocomplete="tel" placeholder="Enter phone number" aria-label="Recipient's phone number"><button class="dialpad-trigger" id="toggle-dialpad" type="button" aria-label="Show dial pad" aria-expanded="false">⌗</button></div><small>Enter the person you intend to call.</small></div>
+          <div class="call-start-wrap"><button class="call-start" id="start-call" type="button"><span class="call-start-icon">↗</span><span>Start a call</span></button><small>Live calling is not connected</small></div>
+        </div>
+        <div class="dialpad" id="recipient-dialpad" hidden><div class="dialpad-heading"><span>Dial recipient</span><button id="clear-recipient" type="button">Clear</button></div><div class="dialpad-keys"><button type="button" data-recipient-key="1">1</button><button type="button" data-recipient-key="2">2<small>ABC</small></button><button type="button" data-recipient-key="3">3<small>DEF</small></button><button type="button" data-recipient-key="4">4<small>GHI</small></button><button type="button" data-recipient-key="5">5<small>JKL</small></button><button type="button" data-recipient-key="6">6<small>MNO</small></button><button type="button" data-recipient-key="7">7<small>PQRS</small></button><button type="button" data-recipient-key="8">8<small>TUV</small></button><button type="button" data-recipient-key="9">9<small>WXYZ</small></button><button type="button" data-recipient-action="backspace" aria-label="Delete last digit">⌫</button><button type="button" data-recipient-key="0">0<small>+</small></button><button type="button" data-recipient-key="#">#</button></div></div>
+      </section>
+
+      <section class="voice-section section-block" id="voice-selection" aria-labelledby="voice-title">
+        <div class="section-heading voice-heading"><div><p class="eyebrow">02 / VOICE STUDIO</p><h2 id="voice-title">Choose your voice</h2><p class="section-description">Fictional AI voices, designed to sound natural. No real-person cloning.</p></div><button class="text-button" id="voice-info" type="button">Voice guidelines <span>↗</span></button></div>
+        <div class="voice-groups">
+          <div class="voice-group"><div class="group-title"><span class="gender-icon female-icon">♀</span><h3>Female voice</h3><span class="voice-count">03 VOICES</span></div><div class="voice-grid">
+            <article class="voice-card selected" data-voice="Natural Female" data-gender="Female"><div class="voice-card-top"><span class="voice-avatar avatar-female">NF</span><span class="realistic-badge">REALISTIC</span></div><h4>Natural Female</h4><p>Warm, clear and conversational</p><div class="voice-card-footer"><span class="voice-gender">Female <i>·</i> Neutral</span><div><button class="preview-button" type="button" aria-label="Preview Natural Female" title="Preview voice">▶</button><button class="select-button" type="button">Selected</button></div></div></article>
+            <article class="voice-card" data-voice="Young Female" data-gender="Female"><div class="voice-card-top"><span class="voice-avatar avatar-female">YF</span><span class="realistic-badge">REALISTIC</span></div><h4>Young Female</h4><p>Bright, relaxed and friendly</p><div class="voice-card-footer"><span class="voice-gender">Female <i>·</i> Light</span><div><button class="preview-button" type="button" aria-label="Preview Young Female" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+            <article class="voice-card" data-voice="Professional Female" data-gender="Female"><div class="voice-card-top"><span class="voice-avatar avatar-female">PF</span><span class="realistic-badge">REALISTIC</span></div><h4>Professional Female</h4><p>Composed, confident and polished</p><div class="voice-card-footer"><span class="voice-gender">Female <i>·</i> Refined</span><div><button class="preview-button" type="button" aria-label="Preview Professional Female" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+          </div></div>
+          <div class="voice-group"><div class="group-title"><span class="gender-icon male-icon">♂</span><h3>Male voice</h3><span class="voice-count">03 VOICES</span></div><div class="voice-grid">
+            <article class="voice-card" data-voice="Natural Male" data-gender="Male"><div class="voice-card-top"><span class="voice-avatar avatar-male">NM</span><span class="realistic-badge">REALISTIC</span></div><h4>Natural Male</h4><p>Balanced, easy and conversational</p><div class="voice-card-footer"><span class="voice-gender">Male <i>·</i> Neutral</span><div><button class="preview-button" type="button" aria-label="Preview Natural Male" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+            <article class="voice-card" data-voice="Young Male" data-gender="Male"><div class="voice-card-top"><span class="voice-avatar avatar-male">YM</span><span class="realistic-badge">REALISTIC</span></div><h4>Young Male</h4><p>Upbeat, warm and approachable</p><div class="voice-card-footer"><span class="voice-gender">Male <i>·</i> Light</span><div><button class="preview-button" type="button" aria-label="Preview Young Male" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+            <article class="voice-card" data-voice="Professional Male" data-gender="Male"><div class="voice-card-top"><span class="voice-avatar avatar-male">PM</span><span class="realistic-badge">REALISTIC</span></div><h4>Professional Male</h4><p>Assured, measured and polished</p><div class="voice-card-footer"><span class="voice-gender">Male <i>·</i> Refined</span><div><button class="preview-button" type="button" aria-label="Preview Professional Male" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+          </div></div>
+        </div>
+        <div class="quality-control"><div class="quality-copy"><span class="quality-mark">✳</span><div><b>Voice realism</b><small>Naturalness and expressive detail</small></div></div><div class="range-wrap"><input id="realism-range" type="range" min="0" max="100" value="78" aria-label="Voice realism"><span class="range-min">0%</span><span class="range-max" id="realism-value">78%</span></div><span class="quality-note">Higher settings may use more processing</span></div>
+      </section>
+
+      <section class="caller-section section-block" id="caller-id" aria-labelledby="caller-title"><div class="section-heading"><div><p class="eyebrow">03 / TRUST & SAFETY</p><h2 id="caller-title">Caller ID</h2></div><span class="lock-label">⌑ AUTHORIZED NUMBERS ONLY</span></div><div class="caller-panel"><div class="caller-number"><span class="caller-icon">↗</span><div><small>YOUR CALLING NUMBER</small><strong id="caller-display">+1 202 555 0148</strong></div></div><div class="caller-status"><span class="status-check">✓</span><span><b>Number ownership required</b><small>Only use a number you own or are authorized to use. Verification must be completed by the telephony provider.</small></span></div><span class="caller-integration">PROVIDER VERIFICATION: NOT CONNECTED</span></div></section>
+
+      <section class="history-section section-block" id="history" aria-labelledby="history-title"><div class="section-heading"><div><p class="eyebrow">04 / RECENT ACTIVITY</p><h2 id="history-title">Call history</h2></div><button class="text-button" id="clear-history" type="button">Clear history <span>×</span></button></div><div class="history-table" id="history-list"><div class="history-empty"><span>◷</span><b>Your calls will show up here</b><small>Call history in this prototype is stored only in this browser.</small></div></div></section>
+
+      <section class="settings-section section-block" id="settings" aria-labelledby="settings-title"><div class="section-heading"><div><p class="eyebrow">05 / PREFERENCES</p><h2 id="settings-title">Settings</h2></div></div><div class="settings-panel"><div class="setting-row"><span><b>Remember this device</b><small>Keep your demo session signed in on this browser.</small></span><label class="switch"><input id="remember-setting" type="checkbox"><span class="switch-track"></span></label></div><div class="setting-row"><span><b>Microphone access</b><small>Requires browser permission and a connected call service.</small></span><span class="setting-unavailable">NOT CONNECTED</span></div><div class="setting-row"><span><b>AI voice conversion</b><small>Requires an authorized voice service and backend integration.</small></span><span class="setting-unavailable">NOT CONNECTED</span></div></div></section>
+
+      <footer class="page-footer"><span class="brand-symbol footer-symbol">v</span><span>VoiceShift AI <i>·</i> Frontend prototype</span><span class="footer-spacer"></span><a href="#caller-id">Responsible caller ID</a><span>© 2026</span></footer>
+    </main>
+  </div>
+
+  <section class="login-screen" id="login-screen" aria-labelledby="login-title">
+    <div class="login-art" aria-hidden="true"><div class="art-ring ring-one"></div><div class="art-ring ring-two"></div><div class="art-center"><span>v</span><i class="art-wave wave-one"></i><i class="art-wave wave-two"></i><i class="art-wave wave-three"></i><i class="art-wave wave-four"></i><i class="art-wave wave-five"></i></div><span class="orbit-label">VOICE / IDENTITY / CONNECTION</span></div>
+    <div class="login-side"><a class="brand login-brand" href="#"><span class="brand-symbol">v</span><span>voice<span class="brand-light">shift</span><small>AI CALLING STUDIO</small></span></a><div class="login-content"><p class="eyebrow">A MORE HUMAN WAY TO CALL</p><h1 id="login-title">Sound like<br><span>yourself.</span></h1><p class="login-intro">Your conversations, in a voice that feels natural to you. Choose a fictional AI voice and make it yours.</p>
+      <form id="login-form"><label for="login-phone">Phone number</label><div class="login-input"><span>+1</span><input id="login-phone" name="phone" type="tel" autocomplete="tel" placeholder="Your phone number" required></div><label for="login-password">Password</label><input class="password-input" id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><div class="login-options"><label class="remember-option"><input id="remember-me" type="checkbox"><span class="custom-check"></span>Remember me</label><span class="no-otp">NO OTP REQUIRED</span></div><button class="login-submit" type="submit">Login <span>→</span></button><p class="login-error" id="login-error" role="alert"></p></form>
+      <p class="create-account">New to VoiceShift? <button id="create-account" type="button">Create account</button></p><p class="login-legal">By continuing, you agree to use voices responsibly and only contact people who expect your call.</p></div><div class="login-bottom"><span>SECURE BY DESIGN</span><span>ENCRYPTED WORKSPACE <i>•</i> PRIVATE CALLS</span></div></div>
+  </section>
+
+  <section class="call-overlay" id="call-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="call-title">
+    <div class="call-window">
+      <button class="call-close" id="close-call" type="button" aria-label="Close call screen">×</button>
+      <div class="call-state"><span class="call-state-dot"></span><span id="call-status">CONNECTING...</span></div>
+      <div class="call-orb" id="call-orb"><div class="orb-rings"><span></span><span></span></div><div class="orb-core"><span>⌕</span><div class="waveform"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+      <p class="eyebrow">DEMO VOICE PROFILE</p><h2 id="call-title">Calling</h2><p class="call-recipient" id="call-recipient">+1 000 000 0000</p>
+      <div class="call-timer" id="call-timer">00:00</div>
+      <div class="call-voice-chip"><span class="tiny-voice-icon">◉</span><span><small>AI VOICE</small><b id="call-voice">Natural Female</b></span><span class="voice-live-dot"></span></div>
+      <button class="change-voice-button" id="change-voice" type="button" aria-expanded="false">Change voice <span>⌄</span></button>
+      <div class="call-voice-picker" id="call-voice-picker" hidden><div class="voice-picker-heading"><span>Choose a voice</span><small>DEMO ONLY</small></div><div class="voice-picker-options"><button type="button" data-call-voice="Natural Female">Natural Female</button><button type="button" data-call-voice="Young Female">Young Female</button><button type="button" data-call-voice="Professional Female">Professional Female</button><button type="button" data-call-voice="Natural Male">Natural Male</button><button type="button" data-call-voice="Young Male">Young Male</button><button type="button" data-call-voice="Professional Male">Professional Male</button></div></div>
+      <div class="call-controls"><button class="call-control" id="mic-control" type="button" aria-pressed="true"><span>⌕</span><small>Mic</small></button><button class="call-control" id="mute-control" type="button" aria-pressed="false"><span>∿</span><small>Mute</small></button><button class="call-control" id="speaker-control" type="button" aria-pressed="false"><span>◖</span><small>Speaker</small></button><button class="call-control voice-toggle" id="voice-control" type="button" aria-pressed="true"><span>◉</span><small>Voice on</small></button><button class="call-control" id="keypad-control" type="button" aria-expanded="false"><span>⌗</span><small>Keypad</small></button></div>
+      <div class="call-dialpad" id="call-dialpad" hidden><div class="call-dialpad-heading"><span>IN-CALL KEYPAD</span><small>DEMO TONES ONLY</small></div><output id="dialpad-display" aria-live="polite">No tones entered</output><div class="call-dialpad-keys"><button type="button" data-tone="1">1</button><button type="button" data-tone="2">2<small>ABC</small></button><button type="button" data-tone="3">3<small>DEF</small></button><button type="button" data-tone="4">4<small>GHI</small></button><button type="button" data-tone="5">5<small>JKL</small></button><button type="button" data-tone="6">6<small>MNO</small></button><button type="button" data-tone="7">7<small>PQRS</small></button><button type="button" data-tone="8">8<small>TUV</small></button><button type="button" data-tone="9">9<small>WXYZ</small></button><button type="button" data-tone="*">*</button><button type="button" data-tone="0">0<small>+</small></button><button type="button" data-tone="#">#</button></div></div>
+      <button class="end-call" id="end-call" type="button"><span>×</span> End call</button><p class="call-disclaimer">SIMULATED CALL · NO PHONE NETWORK CONNECTED</p>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>

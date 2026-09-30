@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111514">
+  <meta name="description" content="VoiceShift AI calling workspace prototype.">
+  <title>VoiceShift AI | Voice calling workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+:root {
+  color-scheme: dark;
+  --canvas: #111514;
+  --panel: rgba(27, 33, 31, .78);
+  --panel-strong: #202725;
+  --line: rgba(226, 236, 228, .09);
+  --text: #eff4ee;
+  --muted: #93a09a;
+  --faint: #64716b;
+  --mint: #a7e8c5;
+  --mint-bright: #7fe0ae;
+  --coral: #f0a18b;
+  --amber: #eacb88;
+  --display: "Manrope", sans-serif;
+  --mono: "DM Mono", monospace;
+  --shadow: 0 26px 80px rgba(0, 0, 0, .24);
+}
+* { box-sizing: border-box; }
+html { overflow-x: clip; scroll-behavior: smooth; scroll-padding-top: 26px; }
+body { min-width: 320px; margin: 0; overflow-x: clip; background: var(--canvas); color: var(--text); font: 14px/1.5 var(--display); }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
+.ambient { position: fixed; z-index: -1; pointer-events: none; border-radius: 50%; filter: blur(90px); opacity: .12; }
+.ambient-one { width: 450px; height: 450px; background: #69b991; top: -240px; left: 36%; }
+.ambient-two { width: 380px; height: 380px; background: #c8846e; right: -260px; bottom: 3%; }
+.app-shell { display: grid; grid-template-columns: 244px minmax(0, 1fr); max-width: 1600px; min-height: 100vh; margin: auto; opacity: 0; visibility: hidden; transition: opacity .45s ease; }
+.app-shell.visible { opacity: 1; visibility: visible; }
+.sidebar { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; min-height: 640px; padding: 30px 18px 18px; border-right: 1px solid var(--line); background: rgba(17, 21, 20, .72); backdrop-filter: blur(24px); }
+.brand { display: inline-flex; align-items: center; gap: 10px; width: fit-content; color: var(--text); font-size: 19px; font-weight: 800; line-height: 1.05; text-decoration: none; letter-spacing: 0; }
+.brand-symbol { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; background: var(--mint); color: #14221a; font-size: 24px; font-weight: 800; }
+.brand-light { color: var(--mint); }
+.brand small { display: block; margin-top: 5px; color: var(--faint); font: 8px var(--mono); letter-spacing: .09em; }
+.workspace-label { display: flex; justify-content: space-between; margin: 51px 7px 14px; color: var(--faint); font: 9px var(--mono); letter-spacing: .1em; }
+.workspace-label span { color: #9faaa3; }
+.navigation { display: grid; gap: 5px; }
+.nav-link { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid transparent; border-radius: 10px; color: var(--muted); font-size: 12px; font-weight: 600; text-decoration: none; transition: .2s ease; }
+.nav-link:hover, .nav-link.active { border-color: rgba(167, 232, 197, .1); background: rgba(167, 232, 197, .08); color: var(--text); }
+.nav-link.active .nav-icon { color: var(--mint); }
+.nav-icon { width: 20px; color: #78857e; font-size: 19px; text-align: center; }
+.sidebar-bottom { margin-top: auto; }
+.secure-note { display: flex; gap: 10px; padding: 13px 11px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.025); }
+.secure-icon { color: var(--mint); font-size: 19px; }
+.secure-note strong, .secure-note small { display: block; }
+.secure-note strong { font-size: 10px; }.secure-note small { margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.account-button { display: flex; align-items: center; width: 100%; gap: 10px; margin-top: 13px; padding: 12px 4px 2px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; }
+.account-avatar { display: grid; width: 33px; height: 33px; flex: 0 0 33px; place-items: center; border: 1px solid rgba(240, 161, 139, .3); border-radius: 50%; background: rgba(240, 161, 139, .13); color: var(--coral); font-size: 12px; }
+.account-copy { flex: 1; }.account-copy b, .account-copy small { display: block; }.account-copy b { font-size: 10px; }.account-copy small { margin-top: 3px; color: var(--muted); font-size: 9px; }.account-menu { color: var(--muted); letter-spacing: 2px; }
+.main-content { width: min(100%, 1200px); padding: 26px clamp(22px, 4.2vw, 64px) 22px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 0 22px; border-bottom: 1px solid var(--line); }
+.breadcrumbs { color: var(--muted); font-size: 10px; }.breadcrumbs span { padding: 0 8px; color: var(--faint); }
+.topbar-actions { display: flex; align-items: center; gap: 13px; }
+.prototype-tag { display: flex; align-items: center; gap: 7px; color: #c9d3cc; font: 8px var(--mono); letter-spacing: .06em; }
+.prototype-tag i, .availability-dot, .call-state-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--mint-bright); box-shadow: 0 0 12px rgba(127, 224, 174, .55); }
+.icon-button { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); }
+.welcome-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 39px 0 33px; }
+.eyebrow { margin: 0 0 8px; color: var(--mint); font: 9px var(--mono); letter-spacing: .12em; }
+.welcome-row h1 { margin: 0; font-size: clamp(32px, 4vw, 47px); font-weight: 600; line-height: 1.12; letter-spacing: 0; }
+.welcome-row h1 span { color: var(--mint); }
+.welcome-copy { max-width: 400px; margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+.availability { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.025); }
+.availability b, .availability small { display: block; }.availability b { font-size: 10px; }.availability small { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.section-block { padding: 25px 0; border-top: 1px solid var(--line); }
+.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 15px; margin-bottom: 17px; }
+.section-heading .eyebrow { margin-bottom: 5px; color: var(--faint); font-size: 8px; }
+.section-heading h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0; }
+.step-label, .lock-label { color: var(--muted); font: 8px var(--mono); letter-spacing: .04em; }
+.number-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 132px; align-items: stretch; gap: 11px; }
+.field-card { display: block; min-width: 0; padding: 13px 14px 11px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); }
+.field-label { display: flex; align-items: center; justify-content: space-between; gap: 6px; color: #b4c0b8; font: 8px var(--mono); letter-spacing: .055em; }
+.verified, .required-dot { color: var(--mint); white-space: nowrap; font-size: 7px; }.verified i { font-style: normal; }.required-dot { color: var(--amber); }
+.unverified { color: var(--amber); white-space: nowrap; font-size: 7px; }
+.authorization-check { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; color: #aab6ae; font-size: 8px; line-height: 1.4; cursor: pointer; }.authorization-check input { width: 12px; height: 12px; flex: 0 0 12px; margin: 0; accent-color: var(--mint); }
+.call-recipient { white-space: pre-line; text-align: center; line-height: 1.7; }
+.change-voice-button { display: flex; align-items: center; gap: 6px; margin: 7px 0 11px; padding: 4px 7px; border: 0; background: transparent; color: var(--mint); font-size: 8px; }.change-voice-button span { font-size: 13px; }
+.call-voice-picker { width: min(100%, 280px); margin: -3px 0 12px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #202825; }.call-voice-picker[hidden] { display: none; }
+.voice-picker-heading { display: flex; justify-content: space-between; margin-bottom: 7px; color: #c8d2cb; font: 8px var(--mono); }.voice-picker-heading small { color: var(--amber); font-size: 6px; }
+.voice-picker-options { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }.voice-picker-options button { min-height: 32px; padding: 5px; border: 1px solid var(--line); border-radius: 6px; background: rgba(255,255,255,.035); color: #dbe4dd; font-size: 7px; text-align: left; }.voice-picker-options button:hover { border-color: rgba(167,232,197,.35); background: rgba(167,232,197,.08); }
+.recipient-field { position: relative; }
+.dialpad-trigger { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: rgba(255,255,255,.04); color: var(--mint); font-size: 18px; }
+.dialpad, .call-dialpad { border: 1px solid var(--line); border-radius: 10px; background: #1b221f; }
+.dialpad[hidden], .call-dialpad[hidden] { display: none; }
+.dialpad { grid-column: 1 / -1; width: min(100%, 350px); padding: 11px; }
+.dialpad-heading, .call-dialpad-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; color: #c8d2cb; font: 8px var(--mono); letter-spacing: .04em; }
+.dialpad-heading button { padding: 2px 0; border: 0; background: none; color: var(--mint); font-size: 8px; }
+.dialpad-keys, .call-dialpad-keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.dialpad-keys button, .call-dialpad-keys button { display: grid; min-height: 43px; align-content: center; justify-items: center; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.035); color: var(--text); font: 14px var(--mono); }
+.dialpad-keys button:hover, .call-dialpad-keys button:hover { border-color: rgba(167,232,197,.4); background: rgba(167,232,197,.09); }
+.dialpad-keys button small, .call-dialpad-keys button small { color: var(--muted); font: 6px var(--mono); }
+.call-controls { flex-wrap: wrap; }
+.call-dialpad { width: min(100%, 260px); padding: 10px; margin: -5px 0 14px; }
+.call-dialpad-heading { font-size: 7px; }
+.call-dialpad-heading small { color: var(--amber); font-size: 6px; }
+.call-dialpad output { display: block; min-height: 21px; overflow-wrap: anywhere; margin: 0 0 8px; color: var(--mint); font: 10px var(--mono); text-align: center; }
+.call-dialpad-keys { gap: 5px; }
+.call-dialpad-keys button { min-height: 38px; }
+.phone-input-wrap { display: flex; align-items: center; gap: 9px; margin-top: 9px; }
+.country-code { padding-right: 9px; border-right: 1px solid var(--line); color: var(--muted); font: 11px var(--mono); }
+.phone-input-wrap input { width: 100%; min-width: 0; padding: 3px 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 12px var(--mono); }
+.phone-input-wrap input::placeholder { color: #65716b; }
+.field-card > small { display: block; margin-top: 8px; color: var(--faint); font-size: 8px; }
+.call-start-wrap { display: flex; flex-direction: column; justify-content: center; gap: 6px; }.call-start-wrap small { color: var(--faint); font-size: 8px; text-align: center; }
+.call-start { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 45px; border: 1px solid #a7e8c5; border-radius: 10px; background: var(--mint); color: #17231b; font-size: 11px; font-weight: 800; transition: transform .2s ease, box-shadow .2s ease; }.call-start:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(167, 232, 197, .16); }.call-start-icon { font-size: 16px; }
+.voice-section { padding-top: 26px; }.voice-heading { align-items: flex-start; }.section-description { margin: 5px 0 0; color: var(--muted); font-size: 10px; }.text-button { padding: 4px 0; border: 0; background: transparent; color: var(--mint); font-size: 9px; font-weight: 700; white-space: nowrap; }.text-button span { margin-left: 3px; font-size: 13px; }
+.voice-groups { display: grid; gap: 16px; }.voice-group { min-width: 0; }.group-title { display: flex; align-items: center; gap: 8px; margin: 0 0 9px; }.group-title h3 { margin: 0; font-size: 11px; font-weight: 700; }.gender-icon { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 7px; font-size: 14px; }.female-icon { background: rgba(240,161,139,.13); color: var(--coral); }.male-icon { background: rgba(132,188,198,.13); color: #93d1dc; }.voice-count { margin-left: auto; color: var(--faint); font: 8px var(--mono); }
+.voice-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }.voice-card { min-width: 0; padding: 11px 11px 10px; border: 1px solid var(--line); border-radius: 10px; background: rgba(29, 36, 33, .7); transition: border-color .2s, background .2s, transform .2s; }.voice-card:hover { transform: translateY(-2px); border-color: rgba(167,232,197,.26); }.voice-card.selected { border-color: rgba(167,232,197,.52); background: linear-gradient(145deg, rgba(167,232,197,.09), rgba(29,36,33,.82) 60%); box-shadow: inset 0 0 0 1px rgba(167,232,197,.04); }
+.voice-card-top { display: flex; align-items: center; justify-content: space-between; }.voice-avatar { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; font: 9px var(--mono); }.avatar-female { background: rgba(240,161,139,.13); color: #f2b3a1; }.avatar-male { background: rgba(132,188,198,.13); color: #a0d8df; }.realistic-badge { padding: 3px 5px; border: 1px solid rgba(167,232,197,.15); border-radius: 4px; color: var(--mint); font: 6px var(--mono); letter-spacing: .05em; }
+.voice-card h4 { overflow: hidden; margin: 10px 0 3px; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }.voice-card > p { min-height: 28px; margin: 0; color: var(--muted); font-size: 8px; line-height: 1.5; }.voice-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--line); }.voice-gender { color: #a6b2ab; font-size: 7px; white-space: nowrap; }.voice-gender i { color: var(--faint); font-style: normal; }.voice-card-footer > div { display: flex; gap: 5px; }
+.preview-button { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--mint); font-size: 8px; }.preview-button:hover { background: rgba(167,232,197,.1); }.select-button { min-width: 55px; height: 25px; padding: 0 8px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--muted); font-size: 8px; font-weight: 700; }.voice-card.selected .select-button { border-color: rgba(167,232,197,.24); background: rgba(167,232,197,.12); color: var(--mint); }
+.quality-control { display: grid; grid-template-columns: 1fr minmax(150px, 1.4fr) auto; align-items: center; gap: 20px; margin-top: 17px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.025); }.quality-copy { display: flex; align-items: center; gap: 9px; }.quality-mark { color: var(--amber); font-size: 17px; }.quality-copy b, .quality-copy small { display: block; }.quality-copy b { font-size: 9px; }.quality-copy small { margin-top: 2px; color: var(--muted); font-size: 8px; }.range-wrap { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 5px 8px; }.range-wrap input { grid-column: 1 / -1; width: 100%; height: 3px; accent-color: var(--mint); }.range-min, .range-max { color: var(--muted); font: 8px var(--mono); }.range-max { color: var(--mint); }.quality-note { color: var(--faint); font-size: 7px; text-align: right; }
+.caller-section { padding-top: 24px; }.caller-panel { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }.caller-number { display: flex; align-items: center; gap: 10px; min-width: 170px; }.caller-icon { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 9px; background: rgba(167,232,197,.1); color: var(--mint); font-size: 17px; }.caller-number small, .caller-number strong { display: block; }.caller-number small { color: var(--muted); font: 7px var(--mono); letter-spacing: .06em; }.caller-number strong { margin-top: 3px; font: 11px var(--mono); }.caller-status { display: flex; align-items: flex-start; gap: 8px; max-width: 380px; }.status-check { display: grid; width: 17px; height: 17px; flex: 0 0 17px; place-items: center; border-radius: 50%; background: rgba(234,203,136,.13); color: var(--amber); font-size: 9px; }.caller-status b, .caller-status small { display: block; }.caller-status b { font-size: 8px; }.caller-status small { margin-top: 3px; color: var(--muted); font-size: 7px; line-height: 1.5; }.caller-integration { color: var(--amber); font: 7px var(--mono); white-space: nowrap; }
+.history-section { padding-top: 24px; }.history-table { min-height: 88px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.018); }.history-empty { display: grid; min-height: 86px; align-content: center; justify-items: center; }.history-empty > span { color: var(--faint); font-size: 19px; }.history-empty b { margin-top: 3px; font-size: 9px; }.history-empty small { margin-top: 3px; color: var(--muted); font-size: 8px; }.history-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 12px 13px; border-bottom: 1px solid var(--line); }.history-row:last-child { border-bottom: 0; }.history-call-icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 8px; background: rgba(167,232,197,.09); color: var(--mint); }.history-details b, .history-details small { display: block; }.history-details b { font: 10px var(--mono); }.history-details small { margin-top: 3px; color: var(--muted); font-size: 8px; }.history-voice { color: #b4c0b8; font-size: 8px; }.history-duration { color: var(--muted); font: 8px var(--mono); }
+.settings-section { padding-top: 24px; }.settings-panel { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 54px; padding: 10px 14px; border-bottom: 1px solid var(--line); }.setting-row:last-child { border-bottom: 0; }.setting-row b, .setting-row small { display: block; }.setting-row b { font-size: 9px; }.setting-row small { margin-top: 3px; color: var(--muted); font-size: 8px; }.setting-unavailable { color: var(--faint); font: 7px var(--mono); }.switch { position: relative; width: 31px; height: 18px; }.switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }.switch-track { position: absolute; inset: 0; border: 1px solid var(--line); border-radius: 20px; background: #303a35; transition: .2s; }.switch-track:after { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #98a49c; content: ""; transition: .2s; }.switch input:checked + .switch-track { border-color: rgba(167,232,197,.5); background: rgba(167,232,197,.2); }.switch input:checked + .switch-track:after { transform: translateX(13px); background: var(--mint); }.page-footer { display: flex; align-items: center; gap: 8px; padding: 20px 0 5px; color: var(--faint); font-size: 8px; }.page-footer a { color: var(--muted); text-decoration: none; }.page-footer i { color: var(--mint); font-style: normal; }.footer-symbol { width: 19px; height: 19px; border-radius: 6px; font-size: 14px; }.footer-spacer { flex: 1; }
+
+.login-screen { position: fixed; z-index: 10; inset: 0; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(400px, .95fr); min-height: 100vh; overflow: auto; background: #101413; }.login-art { position: relative; display: grid; min-height: 100vh; overflow: hidden; place-items: center; background: radial-gradient(ellipse at 51% 49%, rgba(167,232,197,.13), transparent 37%), linear-gradient(145deg, #18201c, #101514 72%); }.login-art:after { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 54px 54px; content: ""; mask-image: linear-gradient(transparent, black 23%, black 75%, transparent); }.art-ring { position: absolute; width: min(54vw, 530px); aspect-ratio: 1; border: 1px solid rgba(167,232,197,.12); border-radius: 50%; }.ring-one { animation: orbit 36s linear infinite; }.ring-two { width: min(42vw, 410px); border-style: dashed; border-color: rgba(240,161,139,.15); animation: orbit 52s linear reverse infinite; }.art-center { position: relative; z-index: 1; display: grid; width: 140px; height: 140px; place-items: center; border: 1px solid rgba(167,232,197,.29); border-radius: 42px; background: rgba(167,232,197,.08); box-shadow: 0 0 100px rgba(167,232,197,.12), inset 0 0 45px rgba(167,232,197,.06); transform: rotate(-8deg); animation: float 5s ease-in-out infinite; }.art-center > span { color: var(--mint); font-size: 79px; font-weight: 800; transform: rotate(8deg); }.art-wave { position: absolute; z-index: -1; left: 50%; width: 1px; border-radius: 5px; background: var(--mint); opacity: .65; transform: translateX(-50%) rotate(8deg); }.wave-one { height: 42px; margin-left: -37px; }.wave-two { height: 70px; margin-left: -20px; }.wave-three { height: 54px; margin-left: 0; }.wave-four { height: 80px; margin-left: 20px; }.wave-five { height: 38px; margin-left: 38px; }.orbit-label { position: absolute; z-index: 1; bottom: 12%; color: #84938a; font: 8px var(--mono); letter-spacing: .17em; }.login-side { display: flex; flex-direction: column; min-height: 100vh; padding: 34px clamp(28px, 6vw, 88px) 21px; border-left: 1px solid var(--line); }.login-brand { flex-shrink: 0; }.login-content { width: min(100%, 365px); margin: auto; padding: 36px 0; animation: rise .6s both; }.login-content .eyebrow { color: var(--mint); font-size: 8px; }.login-content h1 { margin: 14px 0 8px; font-size: clamp(40px, 5vw, 53px); font-weight: 600; line-height: 1.08; }.login-content h1 span { color: var(--mint); }.login-intro { margin: 13px 0 27px; color: var(--muted); font-size: 11px; line-height: 1.75; }.login-content form { display: grid; gap: 9px; }.login-content form > label { margin: 5px 0 0; color: #c7d0ca; font-size: 9px; font-weight: 700; }.login-input, .password-input { display: flex; align-items: center; width: 100%; min-height: 43px; padding: 0 12px; border: 1px solid rgba(226,236,228,.11); border-radius: 8px; background: rgba(255,255,255,.035); }.login-input span { padding-right: 10px; border-right: 1px solid var(--line); color: var(--muted); font: 10px var(--mono); }.login-input input { width: 100%; padding: 0 0 0 10px; border: 0; outline: 0; background: none; color: var(--text); font-size: 10px; }.login-input input::placeholder, .password-input::placeholder { color: #68746d; }.password-input { color: var(--text); font-size: 10px; }.login-input:focus-within, .password-input:focus { border-color: rgba(167,232,197,.55); }.login-options { display: flex; align-items: center; justify-content: space-between; margin: 3px 0 7px; }.remember-option { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 9px; cursor: pointer; }.remember-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }.custom-check { display: grid; width: 14px; height: 14px; place-items: center; border: 1px solid rgba(226,236,228,.22); border-radius: 4px; }.remember-option input:checked + .custom-check { border-color: var(--mint); background: var(--mint); }.remember-option input:checked + .custom-check:after { color: #17231b; font-size: 10px; content: "✓"; }.no-otp { color: var(--faint); font: 7px var(--mono); letter-spacing: .07em; }.login-submit { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--mint); color: #16221b; font-size: 11px; font-weight: 800; transition: .2s; }.login-submit:hover { background: #b9f1d0; box-shadow: 0 8px 25px rgba(167,232,197,.13); }.login-submit span { font-size: 17px; }.login-error { min-height: 13px; margin: 0; color: var(--coral); font-size: 9px; }.create-account { margin: 17px 0 0; color: var(--muted); font-size: 9px; text-align: center; }.create-account button { padding: 0; border: 0; background: transparent; color: var(--mint); font-size: inherit; font-weight: 700; }.login-legal { margin: 18px auto 0; color: var(--faint); font-size: 8px; line-height: 1.7; text-align: center; }.login-bottom { display: flex; justify-content: space-between; color: var(--faint); font: 7px var(--mono); letter-spacing: .04em; }.login-bottom i { color: var(--mint); font-style: normal; }
+
+.call-overlay { position: fixed; z-index: 20; inset: 0; display: none; place-items: center; overflow-y: auto; padding: 20px; background: rgba(6, 10, 8, .83); backdrop-filter: blur(15px); }.call-overlay.open { display: grid; }.call-window { position: relative; display: flex; width: min(100%, 410px); flex-direction: column; align-items: center; padding: 24px 32px 23px; border: 1px solid rgba(226,236,228,.12); border-radius: 22px; background: radial-gradient(ellipse at 50% 32%, rgba(167,232,197,.08), transparent 43%), #171d1a; box-shadow: var(--shadow); animation: rise .35s ease both; }.call-close { position: absolute; top: 13px; right: 15px; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); font-size: 18px; }.call-state { display: flex; align-items: center; gap: 7px; color: var(--mint); font: 8px var(--mono); letter-spacing: .1em; }.call-state-dot { animation: blink 1.4s infinite; }.call-orb { position: relative; display: grid; width: 170px; height: 170px; margin: 18px auto 14px; place-items: center; }.orb-rings, .orb-rings span { position: absolute; inset: 0; border: 1px solid rgba(167,232,197,.13); border-radius: 50%; }.orb-rings span:first-child { inset: 13px; border-color: rgba(167,232,197,.2); animation: pulse 2.5s ease-out infinite; }.orb-rings span:last-child { inset: -8px; border-color: rgba(167,232,197,.07); animation: pulse 2.5s .8s ease-out infinite; }.orb-core { display: grid; width: 106px; height: 106px; align-content: center; justify-items: center; gap: 5px; border: 1px solid rgba(167,232,197,.35); border-radius: 50%; background: radial-gradient(circle at 50% 30%, rgba(167,232,197,.19), rgba(167,232,197,.06)); box-shadow: 0 0 42px rgba(167,232,197,.12), inset 0 0 25px rgba(167,232,197,.09); color: var(--mint); }.orb-core > span { font-size: 37px; transform: rotate(-45deg); }.waveform { display: flex; align-items: center; gap: 3px; height: 15px; }.waveform i { width: 2px; height: 5px; border-radius: 5px; background: var(--mint); animation: sound 1s ease-in-out infinite alternate; }.waveform i:nth-child(3n) { animation-delay: -.5s; }.waveform i:nth-child(2n) { animation-delay: -.25s; }.call-window > .eyebrow { margin-bottom: 5px; font-size: 7px; }.call-window h2 { margin: 0; font-size: 22px; font-weight: 600; }.call-recipient { margin: 3px 0 0; color: #c0cbc3; font: 12px var(--mono); }.call-timer { margin: 8px 0 15px; color: var(--mint); font: 10px var(--mono); }.call-voice-chip { display: flex; align-items: center; gap: 9px; width: min(100%, 260px); padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.035); }.tiny-voice-icon { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 8px; background: rgba(167,232,197,.1); color: var(--mint); }.call-voice-chip small, .call-voice-chip b { display: block; }.call-voice-chip small { color: var(--muted); font: 6px var(--mono); }.call-voice-chip b { margin-top: 2px; font-size: 9px; }.voice-live-dot { width: 6px; height: 6px; margin-left: auto; border-radius: 50%; background: var(--mint); }.call-controls { display: flex; justify-content: center; gap: 13px; margin: 19px 0 17px; }.call-control { display: grid; width: 51px; height: 53px; align-content: center; justify-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.04); color: #c5d0c8; }.call-control > span { font-size: 17px; }.call-control small { color: var(--muted); font-size: 7px; }.call-control.active { border-color: rgba(240,161,139,.28); background: rgba(240,161,139,.12); color: var(--coral); }.call-control.voice-toggle[aria-pressed="false"] { border-color: rgba(240,161,139,.28); background: rgba(240,161,139,.12); color: var(--coral); }.end-call { display: flex; align-items: center; justify-content: center; gap: 9px; width: min(100%, 220px); min-height: 41px; border: 0; border-radius: 10px; background: #e66d66; color: white; font-size: 10px; font-weight: 800; }.end-call span { font-size: 18px; }.call-disclaimer { margin: 14px 0 0; color: var(--faint); font: 6px var(--mono); letter-spacing: .08em; }.toast { position: fixed; z-index: 30; right: 22px; bottom: 22px; max-width: min(360px, calc(100vw - 44px)); padding: 11px 15px; border: 1px solid rgba(167,232,197,.2); border-radius: 9px; background: #202925; color: var(--text); font-size: 10px; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(8px); transition: .25s ease; }.toast.visible { opacity: 1; transform: translateY(0); }
+
+.login-screen[hidden] { display: none; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0% { transform: scale(.92); opacity: .75; } 100% { transform: scale(1.11); opacity: 0; } }
+@keyframes sound { from { transform: scaleY(.45); } to { transform: scaleY(1.5); } }
+@keyframes blink { 50% { opacity: .35; } }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@keyframes float { 50% { transform: translateY(-8px) rotate(-5deg); } }
+@media (min-width: 1300px) { .main-content { padding-right: 70px; padding-left: 70px; } }
+@media (max-width: 1020px) { .app-shell { grid-template-columns: 205px minmax(0, 1fr); }.sidebar { padding-right: 13px; padding-left: 13px; }.main-content { padding-right: 25px; padding-left: 25px; }.number-grid { grid-template-columns: 1fr 1fr; }.call-start-wrap { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: flex-start; }.call-start { min-width: 140px; }.call-start-wrap small { text-align: left; }.caller-panel { flex-wrap: wrap; }.caller-status { flex: 1; }.caller-integration { width: 100%; padding-left: 42px; } }
+@media (max-width: 760px) { .app-shell { display: block; }.sidebar { position: sticky; z-index: 5; top: 0; display: flex; width: 100%; height: auto; min-height: 0; flex-direction: row; align-items: center; justify-content: space-between; padding: 11px 16px; border-right: 0; border-bottom: 1px solid var(--line); }.brand { font-size: 16px; }.brand-symbol { width: 29px; height: 29px; border-radius: 9px; font-size: 21px; }.brand small { font-size: 6px; }.workspace-label, .sidebar-bottom { display: none; }.navigation { display: flex; gap: 2px; }.nav-link { justify-content: center; width: 34px; height: 34px; gap: 0; padding: 0; font-size: 0; }.nav-icon { font-size: 17px; }.main-content { padding: 18px 20px 20px; }.topbar { padding-bottom: 15px; }.welcome-row { padding: 29px 0 25px; }.welcome-row h1 { font-size: 39px; }.availability { padding: 8px; }.availability small { font-size: 7px; }.section-block { padding: 21px 0; }.voice-grid { gap: 7px; }.voice-card { padding: 9px 8px; }.voice-card-footer { gap: 3px; }.voice-gender { font-size: 6px; }.select-button { min-width: 48px; padding: 0 5px; }.preview-button { width: 23px; height: 25px; }.quality-control { grid-template-columns: 1fr minmax(130px, 1.2fr); gap: 10px; }.quality-note { grid-column: 1 / -1; text-align: left; }.login-screen { grid-template-columns: minmax(0, .78fr) minmax(370px, 1fr); }.login-side { padding-right: 32px; padding-left: 32px; }.art-center { width: 105px; height: 105px; border-radius: 33px; }.art-center > span { font-size: 63px; }.ring-one { width: 57vw; }.ring-two { width: 45vw; } }
+@media (max-width: 560px) { .login-screen { display: block; padding: 20px; }.login-art { display: none; }.login-side { min-height: calc(100vh - 40px); padding: 8px 2px; border: 0; }.login-content { margin: auto; padding: 32px 0; }.login-content h1 { font-size: 43px; }.login-bottom { padding-bottom: 3px; font-size: 6px; }.main-content { padding: 15px 15px 18px; }.topbar-actions { gap: 8px; }.prototype-tag { font-size: 7px; }.welcome-row { align-items: flex-start; gap: 10px; padding-top: 25px; }.welcome-row h1 { font-size: 34px; }.welcome-copy { max-width: 260px; font-size: 10px; }.availability { display: none; }.section-heading h2 { font-size: 18px; }.step-label { max-width: 105px; line-height: 1.4; text-align: right; }.number-grid { grid-template-columns: 1fr; }.call-start-wrap { grid-column: auto; flex-direction: column; align-items: stretch; }.call-start { width: 100%; }.call-start-wrap small { text-align: center; }.field-card { padding: 12px; }.voice-heading { align-items: flex-start; }.voice-heading .text-button { max-width: 85px; white-space: normal; text-align: right; }.voice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }.voice-card { padding: 10px; }.voice-card h4 { font-size: 10px; }.voice-card > p { min-height: 24px; }.voice-gender { font-size: 7px; }.select-button { min-width: 54px; }.quality-control { grid-template-columns: 1fr; gap: 10px; }.quality-note { grid-column: auto; }.range-wrap { grid-template-columns: 1fr auto; }.caller-panel { align-items: flex-start; flex-direction: column; }.caller-status { max-width: none; }.caller-integration { padding-left: 0; }.history-row { grid-template-columns: 30px minmax(0,1fr) auto; gap: 7px; }.history-voice { display: none; }.page-footer { flex-wrap: wrap; font-size: 7px; }.footer-spacer { flex-basis: 10px; }.page-footer a { margin-left: auto; }.call-window { padding: 22px 19px; }.call-controls { gap: 8px; }.call-control { width: 47px; }.call-orb { width: 150px; height: 150px; }.orb-core { width: 96px; height: 96px; } }
+@media (prefers-reduced-motion: reduce) { *, *:before, *:after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+</style>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <div class="app-shell" id="app-shell" aria-hidden="true">
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard" aria-label="VoiceShift AI home"><span class="brand-symbol">v</span><span>voice<span class="brand-light">shift</span><small>AI CALLING STUDIO</small></span></a>
+      <div class="workspace-label">WORKSPACE <span>PERSONAL</span></div>
+      <nav class="navigation" aria-label="Main navigation">
+        <a class="nav-link active" href="#dashboard"><span class="nav-icon">⌂</span>Overview</a>
+        <a class="nav-link" href="#voice-selection"><span class="nav-icon">◉</span>Voice studio</a>
+        <a class="nav-link" href="#history"><span class="nav-icon">◷</span>Call history</a>
+        <a class="nav-link" href="#settings"><span class="nav-icon">⚙</span>Settings</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="secure-note"><span class="secure-icon">◇</span><div><strong>Private by design</strong><small>Calls are never recorded in this demo.</small></div></div>
+        <button class="account-button" id="account-button" type="button"><span class="account-avatar">A</span><span class="account-copy"><b id="account-name">Alex Morgan</b><small>Personal workspace</small></span><span class="account-menu">···</span></button>
+      </div>
+    </aside>
+
+    <main class="main-content" id="dashboard">
+      <header class="topbar">
+        <div class="breadcrumbs">Workspace <span>/</span> Overview</div>
+        <div class="topbar-actions"><span class="prototype-tag"><i></i> PROTOTYPE MODE</span><button class="icon-button" id="help-button" type="button" aria-label="About this prototype">?</button></div>
+      </header>
+
+      <section class="welcome-row">
+        <div><p class="eyebrow">YOUR VOICE, YOUR CHOICE</p><h1>Welcome to<br><span>VoiceShift AI</span></h1><p class="welcome-copy">Make every conversation sound like you, in a voice that feels right.</p></div>
+        <div class="availability"><span class="availability-dot"></span><span><b>Workspace ready</b><small>Voice preview environment</small></span></div>
+      </section>
+
+      <section class="number-section section-block" id="phone-numbers" aria-labelledby="number-title">
+        <div class="section-heading"><div><p class="eyebrow">01 / CALL SETUP</p><h2 id="number-title">Your numbers</h2></div><span class="step-label">Both numbers stay private</span></div>
+        <div class="number-grid">
+          <div class="field-card"><div class="field-label">MY CALLING NUMBER <span class="unverified">VERIFY BEFORE LIVE USE</span></div><label class="phone-input-wrap"><span class="country-code">+1</span><input id="my-number" type="tel" autocomplete="tel" value="202 555 0148" aria-label="My calling number" placeholder="Enter your number"></label><small>Enter a number you own or are authorized to use.</small><label class="authorization-check"><input id="caller-authorized" type="checkbox"><span>I own or am authorized to use this number.</span></label></div>
+          <div class="field-card recipient-field"><div class="field-label">RECIPIENT'S PHONE NUMBER <span class="required-dot">REQUIRED</span></div><div class="phone-input-wrap"><span class="country-code">+1</span><input id="recipient-number" type="tel" autocomplete="tel" placeholder="Enter phone number" aria-label="Recipient's phone number"><button class="dialpad-trigger" id="toggle-dialpad" type="button" aria-label="Show dial pad" aria-expanded="false">⌗</button></div><small>Enter the person you intend to call.</small></div>
+          <div class="call-start-wrap"><button class="call-start" id="start-call" type="button"><span class="call-start-icon">↗</span><span>Start a call</span></button><small>Live calling is not connected</small></div>
+        </div>
+        <div class="dialpad" id="recipient-dialpad" hidden><div class="dialpad-heading"><span>Dial recipient</span><button id="clear-recipient" type="button">Clear</button></div><div class="dialpad-keys"><button type="button" data-recipient-key="1">1</button><button type="button" data-recipient-key="2">2<small>ABC</small></button><button type="button" data-recipient-key="3">3<small>DEF</small></button><button type="button" data-recipient-key="4">4<small>GHI</small></button><button type="button" data-recipient-key="5">5<small>JKL</small></button><button type="button" data-recipient-key="6">6<small>MNO</small></button><button type="button" data-recipient-key="7">7<small>PQRS</small></button><button type="button" data-recipient-key="8">8<small>TUV</small></button><button type="button" data-recipient-key="9">9<small>WXYZ</small></button><button type="button" data-recipient-action="backspace" aria-label="Delete last digit">⌫</button><button type="button" data-recipient-key="0">0<small>+</small></button><button type="button" data-recipient-key="#">#</button></div></div>
+      </section>
+
+      <section class="voice-section section-block" id="voice-selection" aria-labelledby="voice-title">
+        <div class="section-heading voice-heading"><div><p class="eyebrow">02 / VOICE STUDIO</p><h2 id="voice-title">Choose your voice</h2><p class="section-description">Fictional AI voices, designed to sound natural. No real-person cloning.</p></div><button class="text-button" id="voice-info" type="button">Voice guidelines <span>↗</span></button></div>
+        <div class="voice-groups">
+          <div class="voice-group"><div class="group-title"><span class="gender-icon female-icon">♀</span><h3>Female voice</h3><span class="voice-count">03 VOICES</span></div><div class="voice-grid">
+            <article class="voice-card selected" data-voice="Natural Female" data-gender="Female"><div class="voice-card-top"><span class="voice-avatar avatar-female">NF</span><span class="realistic-badge">REALISTIC</span></div><h4>Natural Female</h4><p>Warm, clear and conversational</p><div class="voice-card-footer"><span class="voice-gender">Female <i>·</i> Neutral</span><div><button class="preview-button" type="button" aria-label="Preview Natural Female" title="Preview voice">▶</button><button class="select-button" type="button">Selected</button></div></div></article>
+            <article class="voice-card" data-voice="Young Female" data-gender="Female"><div class="voice-card-top"><span class="voice-avatar avatar-female">YF</span><span class="realistic-badge">REALISTIC</span></div><h4>Young Female</h4><p>Bright, relaxed and friendly</p><div class="voice-card-footer"><span class="voice-gender">Female <i>·</i> Light</span><div><button class="preview-button" type="button" aria-label="Preview Young Female" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+            <article class="voice-card" data-voice="Professional Female" data-gender="Female"><div class="voice-card-top"><span class="voice-avatar avatar-female">PF</span><span class="realistic-badge">REALISTIC</span></div><h4>Professional Female</h4><p>Composed, confident and polished</p><div class="voice-card-footer"><span class="voice-gender">Female <i>·</i> Refined</span><div><button class="preview-button" type="button" aria-label="Preview Professional Female" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+          </div></div>
+          <div class="voice-group"><div class="group-title"><span class="gender-icon male-icon">♂</span><h3>Male voice</h3><span class="voice-count">03 VOICES</span></div><div class="voice-grid">
+            <article class="voice-card" data-voice="Natural Male" data-gender="Male"><div class="voice-card-top"><span class="voice-avatar avatar-male">NM</span><span class="realistic-badge">REALISTIC</span></div><h4>Natural Male</h4><p>Balanced, easy and conversational</p><div class="voice-card-footer"><span class="voice-gender">Male <i>·</i> Neutral</span><div><button class="preview-button" type="button" aria-label="Preview Natural Male" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+            <article class="voice-card" data-voice="Young Male" data-gender="Male"><div class="voice-card-top"><span class="voice-avatar avatar-male">YM</span><span class="realistic-badge">REALISTIC</span></div><h4>Young Male</h4><p>Upbeat, warm and approachable</p><div class="voice-card-footer"><span class="voice-gender">Male <i>·</i> Light</span><div><button class="preview-button" type="button" aria-label="Preview Young Male" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+            <article class="voice-card" data-voice="Professional Male" data-gender="Male"><div class="voice-card-top"><span class="voice-avatar avatar-male">PM</span><span class="realistic-badge">REALISTIC</span></div><h4>Professional Male</h4><p>Assured, measured and polished</p><div class="voice-card-footer"><span class="voice-gender">Male <i>·</i> Refined</span><div><button class="preview-button" type="button" aria-label="Preview Professional Male" title="Preview voice">▶</button><button class="select-button" type="button">Select</button></div></div></article>
+          </div></div>
+        </div>
+        <div class="quality-control"><div class="quality-copy"><span class="quality-mark">✳</span><div><b>Voice realism</b><small>Naturalness and expressive detail</small></div></div><div class="range-wrap"><input id="realism-range" type="range" min="0" max="100" value="78" aria-label="Voice realism"><span class="range-min">0%</span><span class="range-max" id="realism-value">78%</span></div><span class="quality-note">Higher settings may use more processing</span></div>
+      </section>
+
+      <section class="caller-section section-block" id="caller-id" aria-labelledby="caller-title"><div class="section-heading"><div><p class="eyebrow">03 / TRUST & SAFETY</p><h2 id="caller-title">Caller ID</h2></div><span class="lock-label">⌑ AUTHORIZED NUMBERS ONLY</span></div><div class="caller-panel"><div class="caller-number"><span class="caller-icon">↗</span><div><small>YOUR CALLING NUMBER</small><strong id="caller-display">+1 202 555 0148</strong></div></div><div class="caller-status"><span class="status-check">✓</span><span><b>Number ownership required</b><small>Only use a number you own or are authorized to use. Verification must be completed by the telephony provider.</small></span></div><span class="caller-integration">PROVIDER VERIFICATION: NOT CONNECTED</span></div></section>
+
+      <section class="history-section section-block" id="history" aria-labelledby="history-title"><div class="section-heading"><div><p class="eyebrow">04 / RECENT ACTIVITY</p><h2 id="history-title">Call history</h2></div><button class="text-button" id="clear-history" type="button">Clear history <span>×</span></button></div><div class="history-table" id="history-list"><div class="history-empty"><span>◷</span><b>Your calls will show up here</b><small>Call history in this prototype is stored only in this browser.</small></div></div></section>
+
+      <section class="settings-section section-block" id="settings" aria-labelledby="settings-title"><div class="section-heading"><div><p class="eyebrow">05 / PREFERENCES</p><h2 id="settings-title">Settings</h2></div></div><div class="settings-panel"><div class="setting-row"><span><b>Remember this device</b><small>Keep your demo session signed in on this browser.</small></span><label class="switch"><input id="remember-setting" type="checkbox"><span class="switch-track"></span></label></div><div class="setting-row"><span><b>Microphone access</b><small>Requires browser permission and a connected call service.</small></span><span class="setting-unavailable">NOT CONNECTED</span></div><div class="setting-row"><span><b>AI voice conversion</b><small>Requires an authorized voice service and backend integration.</small></span><span class="setting-unavailable">NOT CONNECTED</span></div></div></section>
+
+      <footer class="page-footer"><span class="brand-symbol footer-symbol">v</span><span>VoiceShift AI <i>·</i> Frontend prototype</span><span class="footer-spacer"></span><a href="#caller-id">Responsible caller ID</a><span>© 2026</span></footer>
+    </main>
+  </div>
+
+  <section class="login-screen" id="login-screen" aria-labelledby="login-title">
+    <div class="login-art" aria-hidden="true"><div class="art-ring ring-one"></div><div class="art-ring ring-two"></div><div class="art-center"><span>v</span><i class="art-wave wave-one"></i><i class="art-wave wave-two"></i><i class="art-wave wave-three"></i><i class="art-wave wave-four"></i><i class="art-wave wave-five"></i></div><span class="orbit-label">VOICE / IDENTITY / CONNECTION</span></div>
+    <div class="login-side"><a class="brand login-brand" href="#"><span class="brand-symbol">v</span><span>voice<span class="brand-light">shift</span><small>AI CALLING STUDIO</small></span></a><div class="login-content"><p class="eyebrow">A MORE HUMAN WAY TO CALL</p><h1 id="login-title">Sound like<br><span>yourself.</span></h1><p class="login-intro">Your conversations, in a voice that feels natural to you. Choose a fictional AI voice and make it yours.</p>
+      <form id="login-form"><label for="login-phone">Phone number</label><div class="login-input"><span>+1</span><input id="login-phone" name="phone" type="tel" autocomplete="tel" placeholder="Your phone number" required></div><label for="login-password">Password</label><input class="password-input" id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><div class="login-options"><label class="remember-option"><input id="remember-me" type="checkbox"><span class="custom-check"></span>Remember me</label><span class="no-otp">NO OTP REQUIRED</span></div><button class="login-submit" type="submit">Login <span>→</span></button><p class="login-error" id="login-error" role="alert"></p></form>
+      <p class="create-account">New to VoiceShift? <button id="create-account" type="button">Create account</button></p><p class="login-legal">By continuing, you agree to use voices responsibly and only contact people who expect your call.</p></div><div class="login-bottom"><span>SECURE BY DESIGN</span><span>ENCRYPTED WORKSPACE <i>•</i> PRIVATE CALLS</span></div></div>
+  </section>
+
+  <section class="call-overlay" id="call-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="call-title">
+    <div class="call-window">
+      <button class="call-close" id="close-call" type="button" aria-label="Close call screen">×</button>
+      <div class="call-state"><span class="call-state-dot"></span><span id="call-status">CONNECTING...</span></div>
+      <div class="call-orb" id="call-orb"><div class="orb-rings"><span></span><span></span></div><div class="orb-core"><span>⌕</span><div class="waveform"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+      <p class="eyebrow">DEMO VOICE PROFILE</p><h2 id="call-title">Calling</h2><p class="call-recipient" id="call-recipient">+1 000 000 0000</p>
+      <div class="call-timer" id="call-timer">00:00</div>
+      <div class="call-voice-chip"><span class="tiny-voice-icon">◉</span><span><small>AI VOICE</small><b id="call-voice">Natural Female</b></span><span class="voice-live-dot"></span></div>
+      <button class="change-voice-button" id="change-voice" type="button" aria-expanded="false">Change voice <span>⌄</span></button>
+      <div class="call-voice-picker" id="call-voice-picker" hidden><div class="voice-picker-heading"><span>Choose a voice</span><small>DEMO ONLY</small></div><div class="voice-picker-options"><button type="button" data-call-voice="Natural Female">Natural Female</button><button type="button" data-call-voice="Young Female">Young Female</button><button type="button" data-call-voice="Professional Female">Professional Female</button><button type="button" data-call-voice="Natural Male">Natural Male</button><button type="button" data-call-voice="Young Male">Young Male</button><button type="button" data-call-voice="Professional Male">Professional Male</button></div></div>
+      <div class="call-controls"><button class="call-control" id="mic-control" type="button" aria-pressed="true"><span>⌕</span><small>Mic</small></button><button class="call-control" id="mute-control" type="button" aria-pressed="false"><span>∿</span><small>Mute</small></button><button class="call-control" id="speaker-control" type="button" aria-pressed="false"><span>◖</span><small>Speaker</small></button><button class="call-control voice-toggle" id="voice-control" type="button" aria-pressed="true"><span>◉</span><small>Voice on</small></button><button class="call-control" id="keypad-control" type="button" aria-expanded="false"><span>⌗</span><small>Keypad</small></button></div>
+      <div class="call-dialpad" id="call-dialpad" hidden><div class="call-dialpad-heading"><span>IN-CALL KEYPAD</span><small>DEMO TONES ONLY</small></div><output id="dialpad-display" aria-live="polite">No tones entered</output><div class="call-dialpad-keys"><button type="button" data-tone="1">1</button><button type="button" data-tone="2">2<small>ABC</small></button><button type="button" data-tone="3">3<small>DEF</small></button><button type="button" data-tone="4">4<small>GHI</small></button><button type="button" data-tone="5">5<small>JKL</small></button><button type="button" data-tone="6">6<small>MNO</small></button><button type="button" data-tone="7">7<small>PQRS</small></button><button type="button" data-tone="8">8<small>TUV</small></button><button type="button" data-tone="9">9<small>WXYZ</small></button><button type="button" data-tone="*">*</button><button type="button" data-tone="0">0<small>+</small></button><button type="button" data-tone="#">#</button></div></div>
+      <button class="end-call" id="end-call" type="button"><span>×</span> End call</button><p class="call-disclaimer">SIMULATED CALL · NO PHONE NETWORK CONNECTED</p>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+const appShell = document.querySelector('#app-shell');
+const loginScreen = document.querySelector('#login-screen');
+const callOverlay = document.querySelector('#call-overlay');
+const toast = document.querySelector('#toast');
+const voiceCards = [...document.querySelectorAll('.voice-card')];
+let selectedVoice = 'Natural Female';
+let timerInterval = null;
+let callStartedAt = 0;
+let toastTimeout = null;
+let demoTones = '';
+let historyItems = JSON.parse(localStorage.getItem('voiceshift-history') || '[]');
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add('visible');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toast.classList.remove('visible'), 3200);
+}
+
+function displayPhone(value) {
+  const phone = value.trim();
+  if (!phone) return 'Not set';
+  if (phone.startsWith('+')) return phone;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) return `+1 ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+1 ${digits.slice(1, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+  return `+1 ${phone}`;
+}
+
+function enterWorkspace(phone) {
+  loginScreen.hidden = true;
+  appShell.classList.add('visible');
+  appShell.setAttribute('aria-hidden', 'false');
+  const digits = phone.replace(/\D/g, '');
+  const myNumber = document.querySelector('#my-number');
+  myNumber.value = digits.length >= 10 ? `${digits.slice(-10, -7)} ${digits.slice(-7, -4)} ${digits.slice(-4)}` : phone;
+  document.querySelector('#caller-display').textContent = displayPhone(myNumber.value);
+  document.querySelector('#account-name').textContent = 'Personal account';
+  renderHistory();
+}
+
+document.querySelector('#login-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const phone = document.querySelector('#login-phone').value.trim();
+  const password = document.querySelector('#login-password').value;
+  if (phone.replace(/\D/g, '').length < 7 || password.length < 4) {
+    document.querySelector('#login-error').textContent = 'Enter a valid phone number and a password of at least 4 characters.';
+    return;
+  }
+  if (document.querySelector('#remember-me').checked) localStorage.setItem('voiceshift-remembered-phone', phone);
+  else localStorage.removeItem('voiceshift-remembered-phone');
+  enterWorkspace(phone);
+});
+
+document.querySelector('#create-account').addEventListener('click', () => {
+  showToast('Account creation requires a secure backend integration. Use a demo phone number to preview the workspace.');
+  document.querySelector('#login-phone').focus();
+});
+
+const rememberedPhone = localStorage.getItem('voiceshift-remembered-phone');
+if (rememberedPhone) {
+  document.querySelector('#login-phone').value = rememberedPhone;
+  document.querySelector('#remember-me').checked = true;
+}
+
+voiceCards.forEach(card => {
+  card.querySelector('.select-button').addEventListener('click', () => {
+    selectedVoice = card.dataset.voice;
+    voiceCards.forEach(option => {
+      const isSelected = option === card;
+      option.classList.toggle('selected', isSelected);
+      option.querySelector('.select-button').textContent = isSelected ? 'Selected' : 'Select';
+    });
+  });
+  card.querySelector('.preview-button').addEventListener('click', () => {
+    showToast(`${card.dataset.voice} preview needs the AI voice generation service; it is not connected in this prototype.`);
+  });
+});
+
+const callVoicePicker = document.querySelector('#call-voice-picker');
+document.querySelector('#change-voice').addEventListener('click', event => {
+  callVoicePicker.hidden = !callVoicePicker.hidden;
+  event.currentTarget.setAttribute('aria-expanded', String(!callVoicePicker.hidden));
+});
+document.querySelectorAll('[data-call-voice]').forEach(button => {
+  button.addEventListener('click', () => {
+    selectedVoice = button.dataset.callVoice;
+    document.querySelector('#call-voice').textContent = selectedVoice;
+    voiceCards.forEach(card => {
+      const isSelected = card.dataset.voice === selectedVoice;
+      card.classList.toggle('selected', isSelected);
+      card.querySelector('.select-button').textContent = isSelected ? 'Selected' : 'Select';
+    });
+    callVoicePicker.hidden = true;
+    document.querySelector('#change-voice').setAttribute('aria-expanded', 'false');
+    showToast('Demo voice selection changed. Live audio conversion is not connected.');
+  });
+});
+
+document.querySelector('#realism-range').addEventListener('input', event => {
+  document.querySelector('#realism-value').textContent = `${event.target.value}%`;
+});
+
+const recipientPad = document.querySelector('#recipient-dialpad');
+const recipientInput = document.querySelector('#recipient-number');
+document.querySelector('#toggle-dialpad').addEventListener('click', () => {
+  recipientPad.hidden = !recipientPad.hidden;
+  document.querySelector('#toggle-dialpad').setAttribute('aria-expanded', String(!recipientPad.hidden));
+});
+document.querySelectorAll('[data-recipient-key]').forEach(button => {
+  button.addEventListener('click', () => {
+    recipientInput.value += button.dataset.recipientKey;
+    recipientInput.focus();
+  });
+});
+document.querySelector('[data-recipient-action="backspace"]').addEventListener('click', () => {
+  recipientInput.value = recipientInput.value.slice(0, -1);
+  recipientInput.focus();
+});
+document.querySelector('#clear-recipient').addEventListener('click', () => {
+  recipientInput.value = '';
+  recipientInput.focus();
+});
+
+document.querySelector('#my-number').addEventListener('input', event => {
+  document.querySelector('#caller-display').textContent = displayPhone(event.target.value);
+});
+
+function formatDuration(totalSeconds) {
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
+function startCall() {
+  const recipient = document.querySelector('#recipient-number').value.trim();
+  if (recipient.replace(/\D/g, '').length < 7) {
+    document.querySelector('#recipient-number').focus();
+    showToast('Enter a valid recipient phone number to preview the call screen.');
+    return;
+  }
+  const ownNumber = document.querySelector('#my-number').value.trim();
+  if (ownNumber.replace(/\D/g, '').length < 7) {
+    document.querySelector('#my-number').focus();
+    showToast('Set a phone number you own or are authorized to use as caller ID.');
+    return;
+  }
+  if (!document.querySelector('#caller-authorized').checked) {
+    document.querySelector('#caller-authorized').focus();
+    showToast('Confirm that you own or are authorized to use this caller ID number.');
+    return;
+  }
+  document.querySelector('#call-recipient').textContent = `From ${displayPhone(ownNumber)}\nTo ${displayPhone(recipient)}`;
+  document.querySelector('#call-voice').textContent = selectedVoice;
+  demoTones = '';
+  document.querySelector('#dialpad-display').textContent = 'No tones entered';
+  document.querySelector('#call-dialpad').hidden = true;
+  document.querySelector('#keypad-control').setAttribute('aria-expanded', 'false');
+  document.querySelector('#call-status').textContent = 'CONNECTING...';
+  document.querySelector('#call-timer').textContent = '00:00';
+  callOverlay.classList.add('open');
+  callOverlay.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  callStartedAt = Date.now();
+  window.setTimeout(() => {
+    if (callOverlay.classList.contains('open')) document.querySelector('#call-status').textContent = 'DEMO CALL ACTIVE';
+  }, 1800);
+  timerInterval = window.setInterval(() => {
+    document.querySelector('#call-timer').textContent = formatDuration(Math.floor((Date.now() - callStartedAt) / 1000));
+  }, 1000);
+}
+
+function finishCall() {
+  if (!callOverlay.classList.contains('open')) return;
+  clearInterval(timerInterval);
+  const duration = Math.floor((Date.now() - callStartedAt) / 1000);
+  historyItems.unshift({
+    caller: displayPhone(document.querySelector('#my-number').value),
+    recipient: displayPhone(document.querySelector('#recipient-number').value),
+    voice: selectedVoice,
+    duration: formatDuration(duration),
+    date: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  });
+  historyItems = historyItems.slice(0, 8);
+  localStorage.setItem('voiceshift-history', JSON.stringify(historyItems));
+  renderHistory();
+  callOverlay.classList.remove('open');
+  callOverlay.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  showToast('Demo call ended. No phone call was placed.');
+}
+
+function renderHistory() {
+  const list = document.querySelector('#history-list');
+  if (!historyItems.length) {
+    list.innerHTML = '<div class="history-empty"><span>◷</span><b>Your calls will show up here</b><small>Call history in this prototype is stored only in this browser.</small></div>';
+    return;
+  }
+  list.innerHTML = historyItems.map(item => `<div class="history-row"><span class="history-call-icon">↗</span><span class="history-details"><b>${item.recipient}</b><small>From ${item.caller || 'Not set'} · ${item.date} · Demo call</small></span><span class="history-voice">${item.voice}</span><span class="history-duration">${item.duration}</span></div>`).join('');
+}
+
+document.querySelector('#start-call').addEventListener('click', startCall);
+document.querySelector('#end-call').addEventListener('click', finishCall);
+document.querySelector('#close-call').addEventListener('click', finishCall);
+callOverlay.addEventListener('click', event => { if (event.target === callOverlay) finishCall(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape') finishCall(); });
+
+document.querySelectorAll('.call-control').forEach(button => {
+  button.addEventListener('click', () => {
+    const enabled = button.getAttribute('aria-pressed') !== 'true';
+    button.setAttribute('aria-pressed', String(enabled));
+    button.classList.toggle('active', !enabled);
+    if (button.id === 'keypad-control') {
+      document.querySelector('#call-dialpad').hidden = !enabled;
+      button.setAttribute('aria-expanded', String(enabled));
+    }
+    if (button.id === 'voice-control') button.querySelector('small').textContent = enabled ? 'Voice on' : 'Voice off';
+    if (button.id === 'mute-control') button.querySelector('small').textContent = enabled ? 'Mute' : 'Muted';
+    if (button.id === 'mic-control' && enabled) showToast('Microphone access requires browser permission and a connected call service.');
+  });
+});
+
+document.querySelectorAll('[data-tone]').forEach(button => {
+  button.addEventListener('click', () => {
+    demoTones += button.dataset.tone;
+    document.querySelector('#dialpad-display').textContent = demoTones;
+  });
+});
+
+document.querySelector('#clear-history').addEventListener('click', () => {
+  historyItems = [];
+  localStorage.removeItem('voiceshift-history');
+  renderHistory();
+});
+
+document.querySelector('#remember-setting').addEventListener('change', event => {
+  document.querySelector('#remember-me').checked = event.target.checked;
+  showToast(event.target.checked ? 'Remember this device is enabled.' : 'Remember this device is disabled.');
+});
+
+document.querySelector('#remember-me').addEventListener('change', event => {
+  document.querySelector('#remember-setting').checked = event.target.checked;
+});
+
+document.querySelector('#help-button').addEventListener('click', () => showToast('Frontend prototype only: calls, voice conversion, microphone access, routing, and number verification are not connected.'));
+document.querySelector('#voice-info').addEventListener('click', () => showToast('Use fictional AI voices only. Do not clone a real person without their explicit permission.'));
+document.querySelector('#account-button').addEventListener('click', () => showToast('Account management will be available when authentication is connected.'));
+renderHistory();
+
+</script>
+</body>
+</html>
